@@ -81,19 +81,19 @@ class TimerApp:
         )
         self.output_text.pack(fill=tk.BOTH, expand=True)
         self.scrollbar.config(command=self.output_text.yview)
-        
+
         # Button frame at bottom of left pane
         button_frame = ttk.Frame(self.left_pane)
         button_frame.pack(fill=tk.X, padx=5, pady=5)
-        
+
         # Audio Settings button
         audio_button = ttk.Button(button_frame, text="Audio Settings", command=self.show_audio_settings)
         audio_button.pack(side=tk.LEFT, padx=5)
-        
+
         # Regimen Settings button
         regimen_button = ttk.Button(button_frame, text="Regimens", command=self.show_regimen_settings)
         regimen_button.pack(side=tk.LEFT, padx=5)
-        
+
         # Help button
         help_button = ttk.Button(button_frame, text="Help", command=self.show_help)
         help_button.pack(side=tk.RIGHT, padx=5)
@@ -136,17 +136,17 @@ The assistant will understand your intent and execute the command.
 """
         self.output_text.delete('1.0', tk.END)
         self.output_text.insert('1.0', help_text)
-    
+
     def show_audio_settings(self):
         """Show audio settings window"""
         settings_window = tk.Toplevel(self.root)
         settings_window.title("Audio Settings")
         settings_window.geometry("400x350")
         settings_window.resizable(False, False)
-        
+
         # Get current settings
         current_settings = self.timer_manager.alert_manager.get_audio_settings()
-        
+
         # Frequency setting
         freq_frame = ttk.Frame(settings_window)
         freq_frame.pack(fill=tk.X, padx=20, pady=10)
@@ -156,7 +156,7 @@ The assistant will understand your intent and execute the command.
         freq_scale.pack(fill=tk.X, pady=5)
         freq_label = ttk.Label(freq_frame, text=f"{freq_var.get()} Hz")
         freq_label.pack()
-        
+
         # Duration setting
         dur_frame = ttk.Frame(settings_window)
         dur_frame.pack(fill=tk.X, padx=20, pady=10)
@@ -166,7 +166,7 @@ The assistant will understand your intent and execute the command.
         dur_scale.pack(fill=tk.X, pady=5)
         dur_label = ttk.Label(dur_frame, text=f"{dur_var.get()} ms")
         dur_label.pack()
-        
+
         # Interval setting
         int_frame = ttk.Frame(settings_window)
         int_frame.pack(fill=tk.X, padx=20, pady=10)
@@ -176,7 +176,7 @@ The assistant will understand your intent and execute the command.
         int_scale.pack(fill=tk.X, pady=5)
         int_label = ttk.Label(int_frame, text=f"{int_var.get():.1f} sec")
         int_label.pack()
-        
+
         # Notification timeout setting
         timeout_frame = ttk.Frame(settings_window)
         timeout_frame.pack(fill=tk.X, padx=20, pady=10)
@@ -186,7 +186,7 @@ The assistant will understand your intent and execute the command.
         timeout_scale.pack(fill=tk.X, pady=5)
         timeout_label = ttk.Label(timeout_frame, text=f"{timeout_var.get()} sec")
         timeout_label.pack()
-        
+
         # Update labels when scales change
         def update_freq_label(*args):
             freq_label.config(text=f"{freq_var.get()} Hz")
@@ -196,16 +196,16 @@ The assistant will understand your intent and execute the command.
             int_label.config(text=f"{int_var.get():.1f} sec")
         def update_timeout_label(*args):
             timeout_label.config(text=f"{timeout_var.get()} sec")
-            
+
         freq_var.trace('w', update_freq_label)
         dur_var.trace('w', update_dur_label)
         int_var.trace('w', update_int_label)
         timeout_var.trace('w', update_timeout_label)
-        
+
         # Buttons
         button_frame = ttk.Frame(settings_window)
         button_frame.pack(fill=tk.X, padx=20, pady=20)
-        
+
         def apply_settings():
             # Apply settings immediately
             self.timer_manager.alert_manager.set_audio_settings(
@@ -214,10 +214,10 @@ The assistant will understand your intent and execute the command.
                 interval=int_var.get()
             )
             self.timer_manager.alert_manager.alert_timeout = timeout_var.get()
-            
+
             # Save the alert timeout setting as well
             self.timer_manager.alert_manager.save_settings()
-            
+
             # If there are any active alerts, restart them with new settings
             active_alerts = list(self.timer_manager.alert_manager.active_alerts.keys())
             for timer_name in active_alerts:
@@ -225,10 +225,10 @@ The assistant will understand your intent and execute the command.
                     # Stop and restart alert with new settings
                     self.timer_manager.alert_manager.stop_alert(timer_name)
                     self.timer_manager.alert_manager.start_alert(timer_name)
-            
+
             self.print_output(f"Audio settings updated and saved! Frequency: {freq_var.get()}Hz, Duration: {dur_var.get()}ms, Interval: {int_var.get():.1f}s, Max Duration: {timeout_var.get()}s")
             settings_window.destroy()
-        
+
         def test_beep():
             try:
                 if hasattr(self.timer_manager.alert_manager, 'WINSOUND_AVAILABLE') and self.timer_manager.alert_manager.WINSOUND_AVAILABLE:
@@ -238,7 +238,7 @@ The assistant will understand your intent and execute the command.
                     print("\a")  # Fallback beep
             except:
                 print("\a")  # Fallback beep
-        
+
         ttk.Button(button_frame, text="Test Beep", command=test_beep).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Apply", command=apply_settings).pack(side=tk.RIGHT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=settings_window.destroy).pack(side=tk.RIGHT)
@@ -321,37 +321,37 @@ The assistant will understand your intent and execute the command.
             else:
                 self.print_output("I didn't understand that command. Try rephrasing or type 'help'.")
 
-    
+
     def show_regimen_settings(self):
         """Show regimen management window"""
         regimens_window = tk.Toplevel(self.root)
         regimens_window.title("Regimen Management")
         regimens_window.geometry("600x500")
         regimens_window.resizable(True, True)
-        
+
         # Create notebook for tabs
         notebook = ttk.Notebook(regimens_window)
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
+
         # Tab 1: List existing regimens
         list_frame = ttk.Frame(notebook)
         notebook.add(list_frame, text="View Regimens")
-        
+
         # Regimen list
         list_label = ttk.Label(list_frame, text="Available Regimens:", font=('Arial', 12, 'bold'))
         list_label.pack(anchor=tk.W, pady=5)
-        
+
         # Scrollable text area for regimens
         list_text_frame = ttk.Frame(list_frame)
         list_text_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-        
+
         list_scrollbar = ttk.Scrollbar(list_text_frame)
         list_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
+
         list_text = tk.Text(list_text_frame, yscrollcommand=list_scrollbar.set, font=('Arial', 10))
         list_text.pack(fill=tk.BOTH, expand=True)
         list_scrollbar.config(command=list_text.yview)
-        
+
         # Load and display regimens
         def refresh_regimen_list():
             if self.timer_manager.regimen_manager:
@@ -365,17 +365,17 @@ The assistant will understand your intent and execute the command.
                         list_text.insert('end', "\n")
                 else:
                     list_text.insert('end', "No regimens found. Create one using the 'Create Regimen' tab.")
-        
+
         refresh_regimen_list()
-        
+
         # Run regimen button
         run_frame = ttk.Frame(list_frame)
         run_frame.pack(fill=tk.X, pady=5)
-        
+
         ttk.Label(run_frame, text="Run regimen:").pack(side=tk.LEFT)
         run_entry = ttk.Entry(run_frame)
         run_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-        
+
         def run_regimen():
             name = run_entry.get().strip()
             if name:
@@ -383,84 +383,84 @@ The assistant will understand your intent and execute the command.
                     self.timer_manager.regimen_manager.run_regimen(name)
                     self.print_output(f"Started regimen: {name}")
                 run_entry.delete(0, tk.END)
-        
+
         ttk.Button(run_frame, text="Run", command=run_regimen).pack(side=tk.RIGHT)
-        
+
         # Tab 2: Create new regimen
         create_frame = ttk.Frame(notebook)
         notebook.add(create_frame, text="Create Regimen")
-        
+
         # Regimen name
         name_frame = ttk.Frame(create_frame)
         name_frame.pack(fill=tk.X, pady=5)
         ttk.Label(name_frame, text="Regimen Name:").pack(side=tk.LEFT)
         name_entry = ttk.Entry(name_frame)
         name_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-        
+
         # Timer list
         timer_frame = ttk.Frame(create_frame)
         timer_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-        
+
         ttk.Label(timer_frame, text="Timers in sequence:", font=('Arial', 10, 'bold')).pack(anchor=tk.W)
-        
+
         # Scrollable frame for timer entries
         canvas = tk.Canvas(timer_frame)
         scrollbar = ttk.Scrollbar(timer_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
-        
+
         scrollable_frame.bind(
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
-        
+
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
-        
+
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
-        
+
         timer_entries = []
-        
+
         def add_timer_entry():
             entry_frame = ttk.Frame(scrollable_frame)
             entry_frame.pack(fill=tk.X, pady=2)
-            
+
             ttk.Label(entry_frame, text="Name:").pack(side=tk.LEFT)
             name_entry = ttk.Entry(entry_frame, width=15)
             name_entry.pack(side=tk.LEFT, padx=2)
-            
+
             ttk.Label(entry_frame, text="Duration (seconds):").pack(side=tk.LEFT, padx=(10,0))
             duration_entry = ttk.Entry(entry_frame, width=10)
             duration_entry.pack(side=tk.LEFT, padx=2)
-            
+
             def remove_entry():
                 timer_entries.remove((entry_frame, name_entry, duration_entry))
                 entry_frame.destroy()
-            
+
             ttk.Button(entry_frame, text="Remove", command=remove_entry).pack(side=tk.RIGHT)
-            
+
             timer_entries.append((entry_frame, name_entry, duration_entry))
-        
+
         # Add initial timer entry
         add_timer_entry()
-        
+
         # Buttons
         button_frame = ttk.Frame(create_frame)
         button_frame.pack(fill=tk.X, pady=5)
-        
+
         ttk.Button(button_frame, text="Add Timer", command=add_timer_entry).pack(side=tk.LEFT)
-        
+
         def save_regimen():
             name = name_entry.get().strip()
             if not name:
                 self.print_output("Please enter a regimen name")
                 return
-            
+
             timers = []
             for _, name_ent, duration_ent in timer_entries:
                 timer_name = name_ent.get().strip()
                 duration_str = duration_ent.get().strip()
-                
+
                 if timer_name and duration_str:
                     try:
                         duration = int(duration_str)
@@ -468,11 +468,11 @@ The assistant will understand your intent and execute the command.
                     except ValueError:
                         self.print_output(f"Invalid duration: {duration_str}")
                         return
-            
+
             if not timers:
                 self.print_output("Please add at least one timer")
                 return
-            
+
             if self.timer_manager.regimen_manager:
                 self.timer_manager.regimen_manager.create_regimen(name, timers)
                 self.print_output(f"Created regimen '{name}' with {len(timers)} timer(s)")
@@ -484,7 +484,7 @@ The assistant will understand your intent and execute the command.
                     entry_frame.destroy()
                 timer_entries.clear()
                 add_timer_entry()
-        
+
         ttk.Button(button_frame, text="Save Regimen", command=save_regimen).pack(side=tk.RIGHT)
 
     def run(self):
