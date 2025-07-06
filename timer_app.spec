@@ -37,5 +37,3 @@ exe = EXE(
     entitlements_file=None,
     icon=['generated-icon.png'],
 )
-,
-)
