@@ -3,6 +3,7 @@ import time
 import subprocess
 from typing import Dict, Optional
 import os
+import json
 
 try:
     import winsound
@@ -14,11 +15,17 @@ class AlertManager:
     def __init__(self):
         self.active_alerts: Dict[str, threading.Thread] = {}
         self.alert_stop_flags: Dict[str, bool] = {}
+        self.settings_file = "audio_settings.json"
+        
+        # Default settings
         self.alert_timeout = 120  # 2 minutes in seconds
         self.volume = 100  # Volume percentage (1-100)
         self.beep_frequency = 880  # Hz
         self.beep_duration = 500  # milliseconds
         self.beep_interval = 1.0  # seconds between beeps
+        
+        # Load saved settings
+        self.load_settings()
 
     def _play_alert(self, timer_name: str):
         """Play a beep sound repeatedly until stopped"""
@@ -83,6 +90,9 @@ class AlertManager:
             self.beep_duration = max(10, min(5000, int(duration)))  # Reasonable duration limits
         if interval is not None:
             self.beep_interval = max(0.1, min(10.0, float(interval)))  # Reasonable interval limits
+        
+        # Automatically save settings when changed
+        self.save_settings()
     
     def get_audio_settings(self):
         """Get current audio settings"""
@@ -91,3 +101,31 @@ class AlertManager:
             'duration': self.beep_duration,
             'interval': self.beep_interval
         }
+    
+    def save_settings(self):
+        """Save current audio settings to file"""
+        settings = {
+            'frequency': self.beep_frequency,
+            'duration': self.beep_duration,
+            'interval': self.beep_interval,
+            'alert_timeout': self.alert_timeout
+        }
+        try:
+            with open(self.settings_file, 'w') as f:
+                json.dump(settings, f, indent=2)
+        except Exception as e:
+            print(f"Error saving audio settings: {str(e)}")
+    
+    def load_settings(self):
+        """Load audio settings from file"""
+        if not os.path.exists(self.settings_file):
+            return
+        try:
+            with open(self.settings_file, 'r') as f:
+                settings = json.load(f)
+                self.beep_frequency = settings.get('frequency', 880)
+                self.beep_duration = settings.get('duration', 500)
+                self.beep_interval = settings.get('interval', 1.0)
+                self.alert_timeout = settings.get('alert_timeout', 120)
+        except Exception as e:
+            print(f"Error loading audio settings: {str(e)}")

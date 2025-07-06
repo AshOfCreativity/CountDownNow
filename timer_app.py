@@ -215,6 +215,9 @@ The assistant will understand your intent and execute the command.
             )
             self.timer_manager.alert_manager.alert_timeout = timeout_var.get()
             
+            # Save the alert timeout setting as well
+            self.timer_manager.alert_manager.save_settings()
+            
             # If there are any active alerts, restart them with new settings
             active_alerts = list(self.timer_manager.alert_manager.active_alerts.keys())
             for timer_name in active_alerts:
@@ -223,7 +226,7 @@ The assistant will understand your intent and execute the command.
                     self.timer_manager.alert_manager.stop_alert(timer_name)
                     self.timer_manager.alert_manager.start_alert(timer_name)
             
-            self.print_output(f"Audio settings updated! Frequency: {freq_var.get()}Hz, Duration: {dur_var.get()}ms, Interval: {int_var.get():.1f}s, Max Duration: {timeout_var.get()}s")
+            self.print_output(f"Audio settings updated and saved! Frequency: {freq_var.get()}Hz, Duration: {dur_var.get()}ms, Interval: {int_var.get():.1f}s, Max Duration: {timeout_var.get()}s")
             settings_window.destroy()
         
         def test_beep():
@@ -483,9 +486,6 @@ The assistant will understand your intent and execute the command.
                 add_timer_entry()
         
         ttk.Button(button_frame, text="Save Regimen", command=save_regimen).pack(side=tk.RIGHT)
-
-        except Exception as e:
-            self.print_output(f"Error: {str(e)}")
 
     def run(self):
         # Make sure the window appears on top when started
