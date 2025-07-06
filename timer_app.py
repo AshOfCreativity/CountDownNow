@@ -16,6 +16,9 @@ class TimerApp:
 
         self.timer_manager = TimerManager()
         self.command_interpreter = CommandInterpreter()
+        
+        # Load saved audio settings on startup
+        self.timer_manager.alert_manager.load_settings()
 
         # Create main container with left and right panes
         self.paned_window = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
@@ -144,6 +147,9 @@ The assistant will understand your intent and execute the command.
         settings_window.geometry("400x350")
         settings_window.resizable(False, False)
 
+        # Load saved settings first
+        self.timer_manager.alert_manager.load_settings()
+        
         # Get current settings
         current_settings = self.timer_manager.alert_manager.get_audio_settings()
 
@@ -239,8 +245,20 @@ The assistant will understand your intent and execute the command.
             except:
                 print("\a")  # Fallback beep
 
+        def save_settings():
+            # Save settings without closing window
+            self.timer_manager.alert_manager.set_audio_settings(
+                frequency=freq_var.get(),
+                duration=dur_var.get(),
+                interval=int_var.get()
+            )
+            self.timer_manager.alert_manager.alert_timeout = timeout_var.get()
+            self.timer_manager.alert_manager.save_settings()
+            self.print_output(f"Audio settings saved! Frequency: {freq_var.get()}Hz, Duration: {dur_var.get()}ms, Interval: {int_var.get():.1f}s, Max Duration: {timeout_var.get()}s")
+
         ttk.Button(button_frame, text="Test Beep", command=test_beep).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Apply", command=apply_settings).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="Save Settings", command=save_settings).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Apply & Close", command=apply_settings).pack(side=tk.RIGHT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=settings_window.destroy).pack(side=tk.RIGHT)
 
     def update_timer_display(self, name: str, time_str: str, status: str):
