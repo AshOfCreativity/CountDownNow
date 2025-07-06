@@ -90,6 +90,10 @@ class TimerApp:
         audio_button = ttk.Button(button_frame, text="Audio Settings", command=self.show_audio_settings)
         audio_button.pack(side=tk.LEFT, padx=5)
         
+        # Regimen Settings button
+        regimen_button = ttk.Button(button_frame, text="Regimens", command=self.show_regimen_settings)
+        regimen_button.pack(side=tk.LEFT, padx=5)
+        
         # Help button
         help_button = ttk.Button(button_frame, text="Help", command=self.show_help)
         help_button.pack(side=tk.RIGHT, padx=5)
@@ -114,13 +118,19 @@ class TimerApp:
         help_text = """Welcome to Timer Assistant!
 Just type what you want in natural language:
 
-Examples:
+Timer Examples:
 - "set a 5 minute timer for coffee break"
 - "start a 25 min pomodoro timer"
 - "create 1 hour meeting timer"
 - "pause the coffee timer"
 - "show all timers"
 - "stop meeting timer"
+
+Regimen Examples:
+- "run workout regimen"
+- "start pomodoro routine"
+- "show regimens"
+- "list all regimens"
 
 The assistant will understand your intent and execute the command.
 """
@@ -307,6 +317,173 @@ The assistant will understand your intent and execute the command.
                 self.print_output(f"Executed: {command_text}")
             else:
                 self.print_output("I didn't understand that command. Try rephrasing or type 'help'.")
+
+    
+    def show_regimen_settings(self):
+        """Show regimen management window"""
+        regimens_window = tk.Toplevel(self.root)
+        regimens_window.title("Regimen Management")
+        regimens_window.geometry("600x500")
+        regimens_window.resizable(True, True)
+        
+        # Create notebook for tabs
+        notebook = ttk.Notebook(regimens_window)
+        notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Tab 1: List existing regimens
+        list_frame = ttk.Frame(notebook)
+        notebook.add(list_frame, text="View Regimens")
+        
+        # Regimen list
+        list_label = ttk.Label(list_frame, text="Available Regimens:", font=('Arial', 12, 'bold'))
+        list_label.pack(anchor=tk.W, pady=5)
+        
+        # Scrollable text area for regimens
+        list_text_frame = ttk.Frame(list_frame)
+        list_text_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        list_scrollbar = ttk.Scrollbar(list_text_frame)
+        list_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        list_text = tk.Text(list_text_frame, yscrollcommand=list_scrollbar.set, font=('Arial', 10))
+        list_text.pack(fill=tk.BOTH, expand=True)
+        list_scrollbar.config(command=list_text.yview)
+        
+        # Load and display regimens
+        def refresh_regimen_list():
+            if self.timer_manager.regimen_manager:
+                regimens = self.timer_manager.regimen_manager.load_regimens()
+                list_text.delete('1.0', tk.END)
+                if regimens:
+                    for name, timers in regimens.items():
+                        list_text.insert('end', f"Regimen: {name}\n")
+                        for i, timer in enumerate(timers, 1):
+                            list_text.insert('end', f"  {i}. {timer['name']} - {timer['duration']}s\n")
+                        list_text.insert('end', "\n")
+                else:
+                    list_text.insert('end', "No regimens found. Create one using the 'Create Regimen' tab.")
+        
+        refresh_regimen_list()
+        
+        # Run regimen button
+        run_frame = ttk.Frame(list_frame)
+        run_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(run_frame, text="Run regimen:").pack(side=tk.LEFT)
+        run_entry = ttk.Entry(run_frame)
+        run_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        
+        def run_regimen():
+            name = run_entry.get().strip()
+            if name:
+                if self.timer_manager.regimen_manager:
+                    self.timer_manager.regimen_manager.run_regimen(name)
+                    self.print_output(f"Started regimen: {name}")
+                run_entry.delete(0, tk.END)
+        
+        ttk.Button(run_frame, text="Run", command=run_regimen).pack(side=tk.RIGHT)
+        
+        # Tab 2: Create new regimen
+        create_frame = ttk.Frame(notebook)
+        notebook.add(create_frame, text="Create Regimen")
+        
+        # Regimen name
+        name_frame = ttk.Frame(create_frame)
+        name_frame.pack(fill=tk.X, pady=5)
+        ttk.Label(name_frame, text="Regimen Name:").pack(side=tk.LEFT)
+        name_entry = ttk.Entry(name_frame)
+        name_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        
+        # Timer list
+        timer_frame = ttk.Frame(create_frame)
+        timer_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        ttk.Label(timer_frame, text="Timers in sequence:", font=('Arial', 10, 'bold')).pack(anchor=tk.W)
+        
+        # Scrollable frame for timer entries
+        canvas = tk.Canvas(timer_frame)
+        scrollbar = ttk.Scrollbar(timer_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        timer_entries = []
+        
+        def add_timer_entry():
+            entry_frame = ttk.Frame(scrollable_frame)
+            entry_frame.pack(fill=tk.X, pady=2)
+            
+            ttk.Label(entry_frame, text="Name:").pack(side=tk.LEFT)
+            name_entry = ttk.Entry(entry_frame, width=15)
+            name_entry.pack(side=tk.LEFT, padx=2)
+            
+            ttk.Label(entry_frame, text="Duration (seconds):").pack(side=tk.LEFT, padx=(10,0))
+            duration_entry = ttk.Entry(entry_frame, width=10)
+            duration_entry.pack(side=tk.LEFT, padx=2)
+            
+            def remove_entry():
+                timer_entries.remove((entry_frame, name_entry, duration_entry))
+                entry_frame.destroy()
+            
+            ttk.Button(entry_frame, text="Remove", command=remove_entry).pack(side=tk.RIGHT)
+            
+            timer_entries.append((entry_frame, name_entry, duration_entry))
+        
+        # Add initial timer entry
+        add_timer_entry()
+        
+        # Buttons
+        button_frame = ttk.Frame(create_frame)
+        button_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Button(button_frame, text="Add Timer", command=add_timer_entry).pack(side=tk.LEFT)
+        
+        def save_regimen():
+            name = name_entry.get().strip()
+            if not name:
+                self.print_output("Please enter a regimen name")
+                return
+            
+            timers = []
+            for _, name_ent, duration_ent in timer_entries:
+                timer_name = name_ent.get().strip()
+                duration_str = duration_ent.get().strip()
+                
+                if timer_name and duration_str:
+                    try:
+                        duration = int(duration_str)
+                        timers.append({"name": timer_name, "duration": duration})
+                    except ValueError:
+                        self.print_output(f"Invalid duration: {duration_str}")
+                        return
+            
+            if not timers:
+                self.print_output("Please add at least one timer")
+                return
+            
+            if self.timer_manager.regimen_manager:
+                self.timer_manager.regimen_manager.create_regimen(name, timers)
+                self.print_output(f"Created regimen '{name}' with {len(timers)} timer(s)")
+                refresh_regimen_list()
+                # Clear form
+                name_entry.delete(0, tk.END)
+                # Reset timer entries
+                for entry_frame, _, _ in timer_entries:
+                    entry_frame.destroy()
+                timer_entries.clear()
+                add_timer_entry()
+        
+        ttk.Button(button_frame, text="Save Regimen", command=save_regimen).pack(side=tk.RIGHT)
+
         except Exception as e:
             self.print_output(f"Error: {str(e)}")
 

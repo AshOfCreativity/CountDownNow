@@ -49,16 +49,24 @@ class Timer:
             if self.callback:
                 self.callback(f"[{self.name}]: Complete!")
                 self.alerting = True
+                # Notify regimen manager of completion
+                if hasattr(self, 'completion_callback') and self.completion_callback:
+                    self.completion_callback(self.name)
 
 class TimerManager:
     def __init__(self):
         self.timers: Dict[str, Timer] = {}
         self.output_callback = None
         self.alert_manager = AlertManager()
+        self.regimen_manager = None
 
     def set_output_callback(self, callback: Callable[[str], None]):
         """Set callback for timer output"""
         self.output_callback = callback
+        # Initialize regimen manager with callback
+        if not self.regimen_manager:
+            from regimen_manager import RegimenManager
+            self.regimen_manager = RegimenManager(self, callback)
 
     def _print(self, message: str):
         """Print message using callback if available"""
@@ -84,6 +92,9 @@ class TimerManager:
 
         timer = Timer(name, duration)
         timer.callback = self._print
+        # Set completion callback for regimen support
+        if self.regimen_manager:
+            timer.completion_callback = self.regimen_manager.on_timer_complete
         self.timers[name] = timer
         self._print(f"Created timer '{name}' ({timer.format_time(duration)})")
 
@@ -242,3 +253,13 @@ class TimerManager:
             self.list_timers()
         elif cmd_type == "clear":
             self.clear_all_timers()
+        elif cmd_type == "run_regimen":
+            if self.regimen_manager:
+                self.regimen_manager.run_regimen(command["name"])
+            else:
+                self._print("Regimen manager not initialized")
+        elif cmd_type == "list_regimens":
+            if self.regimen_manager:
+                self.regimen_manager.list_regimens()
+            else:
+                self._print("Regimen manager not initialized")

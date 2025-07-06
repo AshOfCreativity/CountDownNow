@@ -18,6 +18,7 @@ class CommandInterpreter:
         self.stop_indicators = {'stop', 'end', 'cancel', 'kill', 'terminate', 'abort'}
         self.delete_indicators = {'delete', 'remove', 'clear', 'destroy'}
         self.list_indicators = {'list', 'show', 'display', 'view', 'what', 'status', 'timers'}
+        self.regimen_indicators = {'regimen', 'routine', 'sequence', 'workout', 'program'}
 
     def _extract_duration(self, text: str) -> Optional[int]:
         """Extract duration from text in various formats."""
@@ -119,6 +120,25 @@ class CommandInterpreter:
         # Check for list command
         if any(indicator in text for indicator in self.list_indicators):
             return {"type": "list"}
+        
+        # Check for regimen commands
+        if any(indicator in text for indicator in self.regimen_indicators):
+            if any(word in text for word in ['run', 'start', 'execute', 'begin']):
+                # Extract regimen name
+                for indicator in self.regimen_indicators:
+                    if indicator in text:
+                        parts = text.split(indicator, 1)
+                        if len(parts) > 1:
+                            name = parts[1].strip()
+                            name = re.sub(r'^(the|a|an)\s+', '', name)
+                            # Remove run/start words
+                            for word in ['run', 'start', 'execute', 'begin']:
+                                name = name.replace(word, '').strip()
+                            if name:
+                                return {"type": "run_regimen", "name": name}
+                return {"type": "run_regimen", "name": "workout"}
+            elif any(word in text for word in ['list', 'show']):
+                return {"type": "list_regimens"}
         
         # Check for clear all timers command
         if any(word in text for word in ['clear', 'delete', 'remove']) and any(word in text for word in ['all', 'everything', 'timers']):
