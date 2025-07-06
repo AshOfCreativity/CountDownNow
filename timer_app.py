@@ -320,7 +320,8 @@ The assistant will understand your intent and execute the command.
                 self.print_output(f"Executed: {command_text}")
             else:
                 self.print_output("I didn't understand that command. Try rephrasing or type 'help'.")
-
+        except:
+            self.print_output("I didn't understand that command. Try rephrasing or type 'help'.")
 
     def show_regimen_settings(self):
         """Show regimen management window"""
