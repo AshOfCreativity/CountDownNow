@@ -254,10 +254,15 @@ The assistant will understand your intent and execute the command.
             )
             self.timer_manager.alert_manager.alert_timeout = timeout_var.get()
             self.timer_manager.alert_manager.save_settings()
-            self.print_output(f"Audio settings saved! Frequency: {freq_var.get()}Hz, Duration: {dur_var.get()}ms, Interval: {int_var.get():.1f}s, Max Duration: {timeout_var.get()}s")
+            
+            # Show confirmation in a more prominent way
+            save_button.config(text="SAVED!", state="disabled")
+            self.root.after(2000, lambda: save_button.config(text="Save Settings", state="normal"))
+            self.print_output(f"✓ Audio settings SAVED! Frequency: {freq_var.get()}Hz, Duration: {dur_var.get()}ms, Interval: {int_var.get():.1f}s, Max Duration: {timeout_var.get()}s")
 
         ttk.Button(button_frame, text="Test Beep", command=test_beep).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Save Settings", command=save_settings).pack(side=tk.LEFT, padx=5)
+        save_button = ttk.Button(button_frame, text="Save Settings", command=save_settings)
+        save_button.pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Apply & Close", command=apply_settings).pack(side=tk.RIGHT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=settings_window.destroy).pack(side=tk.RIGHT)
 
