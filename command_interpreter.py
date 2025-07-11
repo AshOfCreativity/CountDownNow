@@ -124,19 +124,53 @@ class CommandInterpreter:
         # Check for regimen commands
         if any(indicator in text for indicator in self.regimen_indicators):
             if any(word in text for word in ['run', 'start', 'execute', 'begin']):
-                # Extract regimen name
-                for indicator in self.regimen_indicators:
-                    if indicator in text:
-                        parts = text.split(indicator, 1)
+                # Extract regimen name - look for the regimen name after action words
+                name = None
+                
+                # Try to find regimen name after action words
+                for action in ['run', 'start', 'execute', 'begin']:
+                    if action in text:
+                        # Split on the action word and look for regimen name after it
+                        parts = text.split(action, 1)
                         if len(parts) > 1:
-                            name = parts[1].strip()
-                            name = re.sub(r'^(the|a|an)\s+', '', name)
-                            # Remove run/start words
-                            for word in ['run', 'start', 'execute', 'begin']:
-                                name = name.replace(word, '').strip()
-                            if name:
-                                return {"type": "run_regimen", "name": name}
-                return {"type": "run_regimen", "name": "workout"}
+                            remaining = parts[1].strip()
+                            # Remove articles and regimen indicators
+                            remaining = re.sub(r'^(the|a|an)\s+', '', remaining)
+                            for indicator in self.regimen_indicators:
+                                remaining = remaining.replace(indicator, '').strip()
+                            if remaining:
+                                name = remaining
+                                break
+                
+                # If no name found after action words, look for name around regimen indicators
+                if not name:
+                    for indicator in self.regimen_indicators:
+                        if indicator in text:
+                            # Look before and after the indicator
+                            parts = text.split(indicator)
+                            if len(parts) > 1:
+                                # Check after the indicator first
+                                after_text = parts[1].strip()
+                                after_text = re.sub(r'^(the|a|an)\s+', '', after_text)
+                                # Remove action words
+                                for word in ['run', 'start', 'execute', 'begin']:
+                                    after_text = after_text.replace(word, '').strip()
+                                if after_text:
+                                    name = after_text
+                                    break
+                                
+                                # If nothing after, check before the indicator
+                                before_text = parts[0].strip()
+                                words = before_text.split()
+                                if words:
+                                    # Take the last word before the indicator as potential name
+                                    potential_name = words[-1]
+                                    if potential_name not in ['run', 'start', 'execute', 'begin', 'the', 'a', 'an']:
+                                        name = potential_name
+                                        break
+                
+                # Use the found name or default to "workout"
+                return {"type": "run_regimen", "name": name if name else "workout"}
             elif any(word in text for word in ['list', 'show']):
                 return {"type": "list_regimens"}
         
