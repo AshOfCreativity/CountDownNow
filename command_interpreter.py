@@ -86,13 +86,15 @@ class CommandInterpreter:
         # Remove duration part from text
         text = text.replace(duration_text, '').strip()
 
-        # Look for words after "for" or "called" or "named"
+        # Look for words after "for", "called", "named", etc.
         for prefix in ['for', 'called', 'named', 'label']:
-            if f" {prefix} " in text:
-                name = text.split(f" {prefix} ")[-1].strip()
+            pattern = rf'\b{prefix}\s+(.+)'
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                name = match.group(1).strip()
                 # Remove articles and timer word
-                name = re.sub(r'^(the|a|an)\s+', '', name)
-                name = name.replace('timer', '').strip()
+                name = re.sub(r'^(the|a|an)\s+', '', name, flags=re.IGNORECASE)
+                name = re.sub(r'\btimer\b', '', name, flags=re.IGNORECASE).strip()
                 if name:
                     return name
 
