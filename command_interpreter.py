@@ -27,26 +27,34 @@ class CommandInterpreter:
         found_time = False
 
         # Handle combined formats first (e.g., "1 hour and 30 minutes", "1h30m")
-        time_parts = re.findall(r'(\d+)\s*([hms]|hour|minute|second|hr|min|sec)s?\b', text)
+        # Only match time units that are either standalone or directly attached to numbers
+        time_parts = re.findall(r'(\d+)\s*([hms]|hours?|minutes?|seconds?|hrs?|mins?|secs?)\b', text)
         if time_parts:
             for value, unit in time_parts:
-                unit = unit.lower()
+                unit = unit.lower().rstrip('s')  # Remove plural 's'
                 try:
                     number = int(value)
                     if unit in ['h', 'hour', 'hr']:
                         total_seconds += number * 3600
                     elif unit in ['m', 'minute', 'min']:
                         total_seconds += number * 60
-                    elif unit in ['s', 'second', 'sec']:
+                    elif unit in ['second', 'sec']:
                         total_seconds += number
                     found_time = True
                 except ValueError:
                     continue
 
-        # Try numeric followed by time unit format (e.g., "5 minutes", "5min")
+        # Try numeric followed by time unit format with word boundaries
         if not found_time:
-            for unit, multiplier in self.time_multipliers.items():
-                pattern = rf'(\d+)\s*{unit}'
+            # Only match complete time words, not parts of other words
+            time_units = {
+                'hours?': 3600, 'hrs?': 3600, 'h\\b': 3600,
+                'minutes?': 60, 'mins?': 60, 'm\\b': 60,
+                'seconds?': 1, 'secs?': 1, 's\\b': 1
+            }
+            
+            for unit_pattern, multiplier in time_units.items():
+                pattern = rf'(\d+)\s*({unit_pattern})'
                 matches = re.finditer(pattern, text)
                 for match in matches:
                     try:
@@ -87,14 +95,18 @@ class CommandInterpreter:
         text = text.replace(duration_text, '').strip()
 
         # Look for words after "for", "called", "named", etc.
-        for prefix in ['for', 'called', 'named', 'label']:
-            pattern = rf'\b{prefix}\s+(.+)'
+        naming_phrases = ['called', 'named', 'for', 'label', 'titled']
+        for prefix in naming_phrases:
+            # Look for the naming phrase followed by the timer name
+            pattern = rf'\b{prefix}\s+(.+?)(?:\s+(?:timer|for|and|$)|$)'
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 name = match.group(1).strip()
-                # Remove articles and timer word
+                # Remove articles and common words
                 name = re.sub(r'^(the|a|an)\s+', '', name, flags=re.IGNORECASE)
-                name = re.sub(r'\btimer\b', '', name, flags=re.IGNORECASE).strip()
+                name = re.sub(r'\b(timer|for)\b', '', name, flags=re.IGNORECASE).strip()
+                # Clean up extra whitespace
+                name = ' '.join(name.split())
                 if name:
                     return name
 

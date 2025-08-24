@@ -263,7 +263,12 @@ The assistant will understand your intent and execute the command.
         ttk.Button(button_frame, text="Test Beep", command=test_beep).pack(side=tk.LEFT, padx=5)
         save_button = ttk.Button(button_frame, text="Save Settings", command=save_settings)
         save_button.pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Apply & Close", command=apply_settings).pack(side=tk.RIGHT, padx=5)
+        
+        def apply_and_save():
+            save_settings()
+            settings_window.destroy()
+        
+        ttk.Button(button_frame, text="Apply & Close", command=apply_and_save).pack(side=tk.RIGHT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=settings_window.destroy).pack(side=tk.RIGHT)
 
     def update_timer_display(self, name: str, time_str: str, status: str):
