@@ -164,10 +164,8 @@ class AlertManager {
         };
         
         try {
-            // Use file-based persistence through Electron IPC
-            if (window.electronAPI) {
-                await window.electronAPI.saveFile(this.settingsFile, settings);
-            }
+            // Use localStorage for web version
+            localStorage.setItem(this.settingsFile, JSON.stringify(settings));
         } catch (error) {
             console.error('Error saving audio settings:', error);
         }
@@ -175,16 +173,14 @@ class AlertManager {
 
     async loadSettings() {
         try {
-            // Use file-based persistence through Electron IPC
-            if (window.electronAPI) {
-                const result = await window.electronAPI.loadFile(this.settingsFile);
-                if (result.success && result.data) {
-                    const settings = result.data;
-                    this.beepFrequency = settings.frequency || 880;
-                    this.beepDuration = settings.duration || 500;
-                    this.beepInterval = settings.interval || 1.0;
-                    this.alertTimeout = settings.alert_timeout || 120;
-                }
+            // Use localStorage for web version
+            const settingsData = localStorage.getItem(this.settingsFile);
+            if (settingsData) {
+                const settings = JSON.parse(settingsData);
+                this.beepFrequency = settings.frequency || 880;
+                this.beepDuration = settings.duration || 500;
+                this.beepInterval = settings.interval || 1.0;
+                this.alertTimeout = settings.alert_timeout || 120;
             }
         } catch (error) {
             console.error('Error loading audio settings:', error);
@@ -199,17 +195,27 @@ class AlertManager {
         }
     }
 
-    // Show desktop notification
+    // Show web notification
     async _showDesktopNotification(timerName) {
         try {
-            if (window.electronAPI) {
-                await window.electronAPI.showNotification(
-                    'Timer Complete',
-                    `Timer '${timerName}' has finished!`
-                );
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    new Notification('Timer Complete', {
+                        body: `Timer '${timerName}' has finished!`,
+                        icon: '/favicon.ico'
+                    });
+                } else if (Notification.permission !== 'denied') {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        new Notification('Timer Complete', {
+                            body: `Timer '${timerName}' has finished!`,
+                            icon: '/favicon.ico'
+                        });
+                    }
+                }
             }
         } catch (error) {
-            console.warn('Desktop notification failed:', error);
+            console.warn('Web notification failed:', error);
         }
     }
 

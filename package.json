@@ -4,8 +4,9 @@
   "description": "A desktop timer management application with natural language processing",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron src/main.js",
-    "dev": "electron src/main.js --dev",
+    "start": "node web-server.js",
+    "dev": "node web-server.js",
+    "electron": "electron src/main.js",
     "build": "electron-builder",
     "build-win": "electron-builder --win",
     "build-mac": "electron-builder --mac",
@@ -13,7 +14,12 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
-  "keywords": ["timer", "productivity", "desktop", "electron"],
+  "keywords": [
+    "timer",
+    "productivity",
+    "desktop",
+    "electron"
+  ],
   "author": "Timer Assistant",
   "license": "MIT",
   "devDependencies": {
@@ -21,6 +27,7 @@
     "electron-builder": "^24.6.4"
   },
   "dependencies": {
+    "express": "^4.21.2",
     "words-to-numbers": "^1.5.1"
   },
   "build": {

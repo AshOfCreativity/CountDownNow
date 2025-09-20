@@ -18,12 +18,10 @@ class RegimenManager {
 
     async loadRegimens() {
         try {
-            // Use file-based persistence through Electron IPC
-            if (window.electronAPI) {
-                const result = await window.electronAPI.loadFile(this.regimensFile);
-                if (result.success && result.data) {
-                    return result.data;
-                }
+            // Use localStorage for web version
+            const regimensData = localStorage.getItem(this.regimensFile);
+            if (regimensData) {
+                return JSON.parse(regimensData);
             }
             return {};
         } catch (error) {
@@ -34,10 +32,8 @@ class RegimenManager {
 
     async saveRegimens(regimens) {
         try {
-            // Use file-based persistence through Electron IPC
-            if (window.electronAPI) {
-                await window.electronAPI.saveFile(this.regimensFile, regimens);
-            }
+            // Use localStorage for web version
+            localStorage.setItem(this.regimensFile, JSON.stringify(regimens));
         } catch (error) {
             this._print(`Error saving regimens: ${error.message}`);
         }
