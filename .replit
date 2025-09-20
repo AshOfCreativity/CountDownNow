@@ -1,4 +1,4 @@
-modules = ["python-3.11"]
+modules = ["python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
@@ -67,3 +67,6 @@ args = "pyinstaller --clean --windowed --onefile --version-file=file_version_inf
 
 [deployment]
 run = ["sh", "-c", "python timer_app.py"]
+
+[agent]
+expertMode = true
