@@ -1,120 +1,110 @@
-# Timer Management Application
+# Timer Assistant (JavaScript/Electron)
 
-A text-based timer management application that allows you to create and manage multiple timers through text commands or a graphical interface.
+A desktop timer management application with natural language processing, built with JavaScript and Electron.
 
 ## Features
 
-- Create named timers with specific durations
-- Start, pause, resume, and stop timers
-- List all timers and their current status
-- Desktop notifications and sound alerts when timers complete
-- Natural language command support
-- Side panel display of active timers
-- Command-line interface for all operations
+- **Natural Language Commands**: Set timers using natural language like "set a 5 minute timer for coffee break"
+- **Multiple Timers**: Run multiple timers simultaneously with individual controls
+- **Audio Alerts**: Customizable beep notifications when timers complete
+- **Regimens**: Create and run sequences of timers (e.g., workout routines, pomodoro sessions)
+- **Persistent Settings**: Audio settings and regimens are saved automatically
+- **Cross-Platform**: Runs on Windows, macOS, and Linux
 
-## Download and Installation
+## Installation
 
-### Windows Users (Recommended)
+### Development
+```bash
+npm install
+npm start
+```
 
-1. Download `TimerAssistant.exe` from the releases page
-2. Double-click to run the application
-3. No additional installation required
+### Building for Distribution
+```bash
+# Build for current platform
+npm run build
 
-### Building from Source (Windows)
+# Build for specific platforms
+npm run build-win    # Windows
+npm run build-mac    # macOS
+npm run build-linux  # Linux
 
-If you want to build the executable yourself:
-
-1. Install Python 3.6 or higher from [python.org](https://python.org)
-   - During installation, check "Add Python to PATH"
-
-2. Install Sox:
-   - Download Sox for Windows from [SourceForge](https://sourceforge.net/projects/sox/files/sox/)
-   - Install to default location (`C:\Program Files (x86)\sox-14.4.2\`)
-
-3. Open Command Prompt as Administrator and run:
-   ```cmd
-   pip install pyinstaller word2number
-   ```
-
-4. Navigate to the project directory and run:
-   ```cmd
-   pyinstaller timer.spec
-   ```
-
-5. Find the executable in the `dist` folder
-
-### Linux
-
-1. Install Python 3.6 or higher:
-   ```bash
-   sudo apt-get update
-   sudo apt-get install python3 python3-pip python3-tk
-   ```
-
-2. Install Sox:
-   ```bash
-   sudo apt-get install sox
-   ```
-
-3. Install required Python packages:
-   ```bash
-   pip3 install word2number
-   ```
-
-### macOS
-
-1. Install Python 3.6 or higher:
-   - Download from [python.org](https://python.org), or
-   - Use Homebrew: `brew install python3`
-
-2. Install Sox:
-   ```bash
-   brew install sox
-   ```
-
-3. Install required Python packages:
-   ```bash
-   pip3 install word2number
-   ```
+# Create distributable packages
+npm run dist
+```
 
 ## Usage
 
-1. Start the application by running `TimerAssistant.exe` (Windows) or `python timer_app.py` (Linux/macOS).
-2. Type `help` to see available commands
+### Timer Commands
+- `"set a 5 minute timer for coffee break"`
+- `"start a 25 min pomodoro timer"`
+- `"create 1 hour meeting timer"`
+- `"pause the coffee timer"`
+- `"resume coffee timer"`
+- `"stop meeting timer"`
+- `"show all timers"`
+- `"clear all timers"`
 
-### Example Commands
+### Regimen Commands
+- `"run workout regimen"`
+- `"start pomodoro routine"`
+- `"show regimens"`
+- `"list all regimens"`
 
-- "set a 5 minute timer for coffee break"
-- "start a 25 min pomodoro timer"
-- "create 1 hour meeting timer"
-- "pause the coffee timer"
-- "show all timers"
-- "stop meeting timer"
+### UI Features
+- **Audio Settings**: Customize beep frequency, duration, and interval
+- **Regimen Manager**: Create and manage timer sequences
+- **Active Timers Panel**: Visual display of running timers with status indicators
 
-The application will understand your intent and execute the command.
+## Architecture
 
-## Offline Use
+### Components
+- **TimerManager**: Core timer functionality with JavaScript timers
+- **CommandInterpreter**: Natural language processing for user commands
+- **AlertManager**: Audio notifications using Web Audio API
+- **RegimenManager**: Timer sequences with automatic progression
+- **TimerApp**: Main application UI and integration
 
-This application works completely offline. Once downloaded, no internet connection is required.
+### Data Persistence
+- Settings and regimens are stored in localStorage
+- Cross-platform compatibility maintained through Electron
 
-## Troubleshooting
+## Development
 
-### No Sound Alerts
+### Project Structure
+```
+src/
+├── main.js              # Electron main process
+├── index.html           # Application UI
+├── css/
+│   └── styles.css       # Application styling
+└── js/
+    ├── timer-manager.js     # Core timer functionality
+    ├── command-interpreter.js # Natural language processing
+    ├── alert-manager.js     # Audio notifications
+    ├── regimen-manager.js   # Timer sequences
+    └── app.js              # Main application logic
+```
 
-The application uses built-in sound alerts. If you don't hear alerts:
-1. Check Windows sound settings
-2. Ensure speakers/headphones are connected and working
-3. Try adjusting system volume
+### Key Technologies
+- **Electron**: Desktop application framework
+- **Web Audio API**: Cross-platform audio notifications
+- **LocalStorage**: Data persistence
+- **Regular Expressions**: Command parsing and duration extraction
 
-### Application Won't Start
+## Packaging
 
-1. Make sure you're running on Windows 10/11 (for .exe)
-2. Try running as administrator (for .exe)
-3. Check Windows Defender/antivirus isn't blocking the application (for .exe)
-4. Ensure Python is in your system PATH (Linux/macOS)
-5. Try running with `python3` instead of `python` on Linux/macOS
-6. Verify tkinter is installed (included with official Python distributions)
+The application uses electron-builder for creating distributable packages:
+- Windows: NSIS installer and portable executable
+- macOS: DMG and ZIP archives
+- Linux: AppImage and DEB packages
 
-## Support
+## Migration from Python
 
-For issues or feature requests, please create an issue in the project repository.
+This JavaScript version replaces the original Python/Tkinter implementation with:
+- Electron for cross-platform desktop deployment
+- Web Audio API instead of system-specific audio libraries
+- LocalStorage instead of JSON file persistence
+- JavaScript timers instead of Python threading
+
+All original functionality has been preserved while improving cross-platform compatibility and deployment options.
