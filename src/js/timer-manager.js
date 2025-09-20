@@ -25,6 +25,11 @@ class Timer {
         }
     }
 
+    start() {
+        this.running = true;
+        this.run();
+    }
+
     run() {
         this.startTime = new Date();
         let lastOutput = "";
@@ -44,6 +49,7 @@ class Timer {
                 
                 this.intervalId = setTimeout(tick, 1000);
             } else if (this.remaining <= 0 && this.running) {
+                this.running = false; // Mark as no longer running
                 if (this.callback) {
                     this.callback(`[${this.name}]: Complete!`);
                     this.alerting = true;
@@ -108,8 +114,7 @@ class TimerManager {
                 existingTimer.alerting = false;
                 existingTimer.duration = duration;
                 existingTimer.remaining = duration;
-                existingTimer.running = true;
-                existingTimer.paused = false;
+                existingTimer.start();
                 this._print(`Refreshed timer '${name}' (${existingTimer.formatTime(duration)})`);
                 return;
             }
@@ -150,28 +155,23 @@ class TimerManager {
             timer.alerting = false;
         }
 
-        timer.running = true;
-        timer.paused = false;
-        timer.run();
+        timer.start();
 
-        // Set up alert when timer completes
+        // Set up alert monitoring for timer completion
         const checkAndAlert = () => {
-            if (timer.running && timer.remaining <= 0 && this.alertManager) {
-                this.alertManager.startAlert(name);
-            }
-        };
-
-        // Check for completion after a delay
-        setTimeout(() => {
             const checkInterval = setInterval(() => {
-                if (timer.remaining <= 0 || !timer.running) {
+                if (!timer.running) {
                     clearInterval(checkInterval);
-                    if (timer.remaining <= 0 && timer.running) {
-                        checkAndAlert();
+                    // If timer completed (not stopped manually), start alert
+                    if (timer.remaining <= 0 && this.alertManager) {
+                        this.alertManager.startAlert(name);
                     }
                 }
-            }, 1000);
-        }, 1000);
+            }, 500);
+        };
+        
+        // Start monitoring
+        setTimeout(checkAndAlert, 1000);
     }
 
     pauseTimer(name) {

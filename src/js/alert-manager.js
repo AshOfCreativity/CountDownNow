@@ -86,6 +86,9 @@ class AlertManager {
             this.audioContext.resume();
         }
 
+        // Show desktop notification
+        this._showDesktopNotification(timerName);
+
         // Set up new alert
         this.alertStopFlags.set(timerName, false);
         
@@ -152,7 +155,7 @@ class AlertManager {
         };
     }
 
-    saveSettings() {
+    async saveSettings() {
         const settings = {
             frequency: this.beepFrequency,
             duration: this.beepDuration,
@@ -161,23 +164,27 @@ class AlertManager {
         };
         
         try {
-            // Use localStorage for settings persistence in Electron
-            localStorage.setItem(this.settingsFile, JSON.stringify(settings));
+            // Use file-based persistence through Electron IPC
+            if (window.electronAPI) {
+                await window.electronAPI.saveFile(this.settingsFile, settings);
+            }
         } catch (error) {
             console.error('Error saving audio settings:', error);
         }
     }
 
-    loadSettings() {
+    async loadSettings() {
         try {
-            // Use localStorage for settings persistence in Electron
-            const settingsData = localStorage.getItem(this.settingsFile);
-            if (settingsData) {
-                const settings = JSON.parse(settingsData);
-                this.beepFrequency = settings.frequency || 880;
-                this.beepDuration = settings.duration || 500;
-                this.beepInterval = settings.interval || 1.0;
-                this.alertTimeout = settings.alert_timeout || 120;
+            // Use file-based persistence through Electron IPC
+            if (window.electronAPI) {
+                const result = await window.electronAPI.loadFile(this.settingsFile);
+                if (result.success && result.data) {
+                    const settings = result.data;
+                    this.beepFrequency = settings.frequency || 880;
+                    this.beepDuration = settings.duration || 500;
+                    this.beepInterval = settings.interval || 1.0;
+                    this.alertTimeout = settings.alert_timeout || 120;
+                }
             }
         } catch (error) {
             console.error('Error loading audio settings:', error);
@@ -189,6 +196,20 @@ class AlertManager {
         if (!this._playBeep()) {
             console.log('\x07'); // Fallback beep
             console.log('Test beep!');
+        }
+    }
+
+    // Show desktop notification
+    async _showDesktopNotification(timerName) {
+        try {
+            if (window.electronAPI) {
+                await window.electronAPI.showNotification(
+                    'Timer Complete',
+                    `Timer '${timerName}' has finished!`
+                );
+            }
+        } catch (error) {
+            console.warn('Desktop notification failed:', error);
         }
     }
 

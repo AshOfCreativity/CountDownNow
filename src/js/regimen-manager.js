@@ -16,12 +16,14 @@ class RegimenManager {
         }
     }
 
-    loadRegimens() {
+    async loadRegimens() {
         try {
-            // Use localStorage for regimens persistence in Electron
-            const regimensData = localStorage.getItem(this.regimensFile);
-            if (regimensData) {
-                return JSON.parse(regimensData);
+            // Use file-based persistence through Electron IPC
+            if (window.electronAPI) {
+                const result = await window.electronAPI.loadFile(this.regimensFile);
+                if (result.success && result.data) {
+                    return result.data;
+                }
             }
             return {};
         } catch (error) {
@@ -30,24 +32,26 @@ class RegimenManager {
         }
     }
 
-    saveRegimens(regimens) {
+    async saveRegimens(regimens) {
         try {
-            // Use localStorage for regimens persistence in Electron
-            localStorage.setItem(this.regimensFile, JSON.stringify(regimens));
+            // Use file-based persistence through Electron IPC
+            if (window.electronAPI) {
+                await window.electronAPI.saveFile(this.regimensFile, regimens);
+            }
         } catch (error) {
             this._print(`Error saving regimens: ${error.message}`);
         }
     }
 
-    createRegimen(name, timers) {
-        const regimens = this.loadRegimens();
+    async createRegimen(name, timers) {
+        const regimens = await this.loadRegimens();
         regimens[name] = timers;
-        this.saveRegimens(regimens);
+        await this.saveRegimens(regimens);
         this._print(`Created regimen '${name}' with ${timers.length} timer(s)`);
     }
 
-    listRegimens() {
-        const regimens = this.loadRegimens();
+    async listRegimens() {
+        const regimens = await this.loadRegimens();
         if (Object.keys(regimens).length === 0) {
             this._print("No regimens available");
             return;
@@ -60,8 +64,8 @@ class RegimenManager {
         }
     }
 
-    runRegimen(name) {
-        const regimens = this.loadRegimens();
+    async runRegimen(name) {
+        const regimens = await this.loadRegimens();
         if (!(name in regimens)) {
             this._print(`Regimen '${name}' not found`);
             return;
@@ -110,16 +114,16 @@ class RegimenManager {
     }
 
     // Get regimens for UI display
-    getRegimens() {
-        return this.loadRegimens();
+    async getRegimens() {
+        return await this.loadRegimens();
     }
 
     // Delete a regimen
-    deleteRegimen(name) {
-        const regimens = this.loadRegimens();
+    async deleteRegimen(name) {
+        const regimens = await this.loadRegimens();
         if (name in regimens) {
             delete regimens[name];
-            this.saveRegimens(regimens);
+            await this.saveRegimens(regimens);
             this._print(`Deleted regimen '${name}'`);
             return true;
         } else {
@@ -129,14 +133,14 @@ class RegimenManager {
     }
 
     // Check if a regimen exists
-    regimenExists(name) {
-        const regimens = this.loadRegimens();
+    async regimenExists(name) {
+        const regimens = await this.loadRegimens();
         return name in regimens;
     }
 
     // Get regimen details
-    getRegimen(name) {
-        const regimens = this.loadRegimens();
+    async getRegimen(name) {
+        const regimens = await this.loadRegimens();
         return regimens[name] || null;
     }
 

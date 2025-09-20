@@ -1,4 +1,5 @@
-const { app, BrowserWindow, Menu, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, Notification } = require('electron');
+const fs = require('fs').promises;
 const path = require('path');
 
 let mainWindow;
@@ -11,11 +12,11 @@ function createWindow() {
     minWidth: 800,
     minHeight: 500,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: true
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, 'assets', 'icon.png'), // Add icon if available
+    // icon: path.join(__dirname, '..', 'build', 'icon.png') // Icon configured in build
     show: false // Don't show until ready
   });
 
@@ -61,10 +62,17 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Security: Prevent new window creation
+// Security: Prevent new window creation and external navigation
 app.on('web-contents-created', (event, contents) => {
   contents.on('new-window', (event, navigationUrl) => {
     event.preventDefault();
+  });
+  
+  contents.on('will-navigate', (event, navigationUrl) => {
+    const parsedUrl = new URL(navigationUrl);
+    if (parsedUrl.protocol !== 'file:') {
+      event.preventDefault();
+    }
   });
 });
 
@@ -139,4 +147,83 @@ function createMenu() {
 
 app.whenReady().then(() => {
   createMenu();
+  setupIPC();
 });
+
+// IPC handlers for secure file operations
+function setupIPC() {
+  // File operations with security restrictions
+  const ALLOWED_FILES = ['audio_settings.json', 'regimens.json'];
+  
+  ipcMain.handle('save-file', async (event, filename, data) => {
+    try {
+      // Security: restrict to allowed filenames only
+      if (!ALLOWED_FILES.includes(filename)) {
+        return { success: false, error: 'Filename not allowed' };
+      }
+      
+      const userDataPath = app.getPath('userData');
+      const filePath = require('path').join(userDataPath, filename);
+      
+      // Security: verify path is contained within userData
+      const relativePath = require('path').relative(userDataPath, filePath);
+      if (relativePath.includes('..') || require('path').isAbsolute(relativePath)) {
+        return { success: false, error: 'Invalid file path' };
+      }
+      
+      await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('load-file', async (event, filename) => {
+    try {
+      // Security: restrict to allowed filenames only
+      if (!ALLOWED_FILES.includes(filename)) {
+        return { success: false, error: 'Filename not allowed' };
+      }
+      
+      const userDataPath = app.getPath('userData');
+      const filePath = require('path').join(userDataPath, filename);
+      
+      // Security: verify path is contained within userData
+      const relativePath = require('path').relative(userDataPath, filePath);
+      if (relativePath.includes('..') || require('path').isAbsolute(relativePath)) {
+        return { success: false, error: 'Invalid file path' };
+      }
+      
+      const data = await fs.readFile(filePath, 'utf8');
+      return { success: true, data: JSON.parse(data) };
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        // File doesn't exist, return empty defaults
+        const defaults = filename === 'audio_settings.json' 
+          ? { frequency: 880, duration: 500, interval: 1.0, alert_timeout: 120 }
+          : {};
+        return { success: true, data: defaults };
+      }
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Desktop notifications
+  ipcMain.handle('show-notification', async (event, title, body) => {
+    try {
+      if (Notification.isSupported()) {
+        new Notification({ title, body }).show();
+        return { success: true };
+      } else {
+        return { success: false, error: 'Notifications not supported' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // App info
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
+}

@@ -35,8 +35,22 @@ class TimerApp {
         this.showHelp();
         this.commandInput.focus();
         
+        // Load settings asynchronously
+        this.initializeAsync();
+        
         // Start timer update loop
         this.startTimerUpdateLoop();
+    }
+
+    async initializeAsync() {
+        try {
+            // Load saved audio settings
+            if (this.alertManager && this.alertManager.loadSettings) {
+                await this.alertManager.loadSettings();
+            }
+        } catch (error) {
+            console.error('Error during async initialization:', error);
+        }
     }
 
     initializeEventListeners() {
@@ -56,8 +70,8 @@ class TimerApp {
             this.showAudioSettings();
         });
         
-        this.regimensButton.addEventListener('click', () => {
-            this.showRegimenSettings();
+        this.regimensButton.addEventListener('click', async () => {
+            await this.showRegimenSettings();
         });
         
         this.helpButton.addEventListener('click', () => {
@@ -104,8 +118,8 @@ class TimerApp {
         // Tab buttons
         const tabButtons = document.querySelectorAll('.tab-button');
         tabButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab);
+            button.addEventListener('click', async (e) => {
+                await this.switchTab(e.target.dataset.tab);
             });
         });
         
@@ -166,8 +180,8 @@ class TimerApp {
         const addTimerButton = document.getElementById('addTimerButton');
         const saveRegimenButton = document.getElementById('saveRegimenButton');
         
-        runRegimenButton.addEventListener('click', () => {
-            this.runRegimen();
+        runRegimenButton.addEventListener('click', async () => {
+            await this.runRegimen();
         });
         
         runRegimenInput.addEventListener('keypress', (e) => {
@@ -180,8 +194,8 @@ class TimerApp {
             this.addTimerEntry();
         });
         
-        saveRegimenButton.addEventListener('click', () => {
-            this.saveRegimen();
+        saveRegimenButton.addEventListener('click', async () => {
+            await this.saveRegimen();
         });
     }
 
@@ -358,8 +372,8 @@ The assistant will understand your intent and execute the command.
         this.printOutput(`✓ Audio settings SAVED! Frequency: ${frequency}Hz, Duration: ${duration}ms, Interval: ${interval.toFixed(1)}s, Max Duration: ${timeout}s`);
     }
 
-    showRegimenSettings() {
-        this.refreshRegimenList();
+    async showRegimenSettings() {
+        await this.refreshRegimenList();
         this.showModal(this.regimensModal);
     }
 
@@ -382,16 +396,16 @@ The assistant will understand your intent and execute the command.
         }
     }
 
-    runRegimen() {
+    async runRegimen() {
         const name = document.getElementById('runRegimenInput').value.trim();
         if (name) {
-            this.regimenManager.runRegimen(name);
+            await this.regimenManager.runRegimen(name);
             this.printOutput(`Started regimen: ${name}`);
             document.getElementById('runRegimenInput').value = "";
         }
     }
 
-    switchTab(tabName) {
+    async switchTab(tabName) {
         // Update tab buttons
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
@@ -405,7 +419,7 @@ The assistant will understand your intent and execute the command.
         document.getElementById(`${tabName}Tab`).classList.add('active');
         
         if (tabName === 'view') {
-            this.refreshRegimenList();
+            await this.refreshRegimenList();
         } else if (tabName === 'create') {
             this.resetCreateForm();
         }
