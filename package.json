@@ -27,8 +27,7 @@
     "electron-builder": "^24.6.4"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "words-to-numbers": "^1.5.1"
+    "express": "^4.21.2"
   },
   "build": {
     "appId": "com.timerassistant.app",

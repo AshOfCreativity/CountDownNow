@@ -28,7 +28,7 @@ class CommandInterpreter {
         while ((match = timePartsRegex.exec(text)) !== null) {
             const value = parseInt(match[1]);
             let unit = match[2].toLowerCase().replace(/s$/, ''); // Remove plural 's'
-            
+
             if (unit === 'h' || unit === 'hour' || unit === 'hr') {
                 totalSeconds += value * 3600;
             } else if (unit === 'm' || unit === 'minute' || unit === 'min') {
@@ -46,7 +46,7 @@ class CommandInterpreter {
                 'minutes?': 60, 'mins?': 60, 'm\\b': 60,
                 'seconds?': 1, 'secs?': 1, 's\\b': 1
             };
-            
+
             for (const [unitPattern, multiplier] of Object.entries(timeUnits)) {
                 const pattern = new RegExp(`(\\d+)\\s*(${unitPattern})`, 'g');
                 let match;
@@ -57,23 +57,50 @@ class CommandInterpreter {
             }
         }
 
-        // Try word numbers (e.g., "five minutes") using simple word-to-number conversion
+        // Try word numbers (e.g., "five minutes") using custom number word conversion
         if (!foundTime) {
-            const wordNumbers = {
-                'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+            const numberWords = {
+                'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
                 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
                 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
                 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
-                'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24,
-                'twenty-five': 25, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60
+                'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60,
+                'seventy': 70, 'eighty': 80, 'ninety': 90
+            };
+
+            // Helper function for custom number word parsing
+            const parseNumberWords = (text) => {
+                if (typeof text === 'number') return text;
+                const words = text.toLowerCase().split(/[\s-]+/);
+                let total = 0;
+                let current = 0;
+
+                for (const word of words) {
+                    const num = numberWords[word];
+                    if (num !== undefined) {
+                        if (num >= 100) {
+                            current *= num;
+                        } else if (num >= 20) {
+                            current += num;
+                        } else {
+                            current = current * 10 + num;
+                        }
+                    } else if (word === 'hundred') {
+                        current *= 100;
+                    } else if (word === 'thousand') {
+                        total += current * 1000;
+                        current = 0;
+                    }
+                }
+                return total + current || null;
             };
 
             for (const [unit, multiplier] of Object.entries(this.timeMultipliers)) {
                 const pattern = new RegExp(`([a-zA-Z-]+)\\s*${unit}`, 'g');
                 let match;
                 while ((match = pattern.exec(text)) !== null) {
-                    const wordNumber = wordNumbers[match[1]];
-                    if (wordNumber !== undefined) {
+                    const wordNumber = parseNumberWords(match[1]);
+                    if (wordNumber !== undefined && wordNumber !== null) {
                         totalSeconds += wordNumber * multiplier;
                         foundTime = true;
                     }
