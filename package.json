@@ -23,8 +23,8 @@
   "author": "Timer Assistant",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^38.2.6",
-    "electron-builder": "^25.1.8"
+    "electron": "^35.7.5",
+    "electron-builder": "^24.6.4"
   },
   "dependencies": {
     "express": "^4.21.2"
